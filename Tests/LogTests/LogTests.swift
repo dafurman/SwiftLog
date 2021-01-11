@@ -4,19 +4,12 @@ import XCTest
 @available(iOS 13, tvOS 10, macOS 10.12, *)
 final private class LogTests: XCTestCase {
 
-    private struct LoggableStruct: Loggable {
-        let logCategory: String
-    }
-
     func testLog() {
         let message = "Test Message"
         let category = "Category"
 
         XCTAssertEqual(Log(category).info(message), message)
-        XCTAssertEqual(Log(category).debug(message), message)
         XCTAssertEqual(Log(category).error(message), message)
-        XCTAssertEqual(Log(category).fault(message), message)
-        XCTAssertEqual(Log(category).default(message), message)
     }
 
     func testLogCodeLocation() {
@@ -28,10 +21,7 @@ final private class LogTests: XCTestCase {
         }
 
         XCTAssertEqual(Log(category).info(message, includeCodeLocation: true), message + codeLocationSuffix(line: #line))
-        XCTAssertEqual(Log(category).debug(message, includeCodeLocation: true), message + codeLocationSuffix(line: #line))
         XCTAssertEqual(Log(category).error(message, includeCodeLocation: true), message + codeLocationSuffix(line: #line))
-        XCTAssertEqual(Log(category).fault(message, includeCodeLocation: true), message + codeLocationSuffix(line: #line))
-        XCTAssertEqual(Log(category).default(message, includeCodeLocation: true), message + codeLocationSuffix(line: #line))
     }
 
     func testLogCategoryFromType() {
@@ -39,13 +29,6 @@ final private class LogTests: XCTestCase {
         let log = Log(inputType)
         let expectedCategory = "\(type(of: inputType))"
         XCTAssertEqual(log.category, expectedCategory)
-    }
-
-    func testLogCategoryFromLoggable() {
-        let logCategory = "LogCategory"
-        let loggable: Loggable = LoggableStruct(logCategory: logCategory)
-        let log = Log(loggable)
-        XCTAssertEqual(log.category, logCategory)
     }
 
     func testLogCategoryFromRawString() {
@@ -73,7 +56,6 @@ final private class LogTests: XCTestCase {
         ("testLog", testLog),
         ("testLogCodeLocation", testLogCodeLocation),
         ("testLogCategoryFromType", testLogCategoryFromType),
-        ("testLogCategoryFromLoggable", testLogCategoryFromLoggable),
         ("testLogCategoryFromRawString", testLogCategoryFromRawString),
         ("testIsLoggingEnabled", testIsLoggingEnabled),
     ]

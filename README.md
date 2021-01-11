@@ -4,7 +4,7 @@ SwiftLog wraps unwieldy use of os_log calls into prettier syntax!
 
 Begone days of Obj-C-style string interpolation! `"%@", value` -> `"\(value)"`
 
-#### There are three ways of using SwiftLog, to allow for some flexibility in usage.
+#### There are two ways of using SwiftLog, to allow for some flexibility in usage.
 
 ##### 1. Log(self)
 
@@ -24,22 +24,7 @@ struct UserFlowCoordinator {
 }
 ```
 
-##### 2. Loggable
-If performing a lot of logging from within one type, and you want to change the category for that type, you can have it conform to `Loggable`:
-```
-struct UserFlowCoordinator: Loggable { 
-
-    var logCategory: String {
-        "UserFlow" // Log(self) will now use the category "UserFlow" instead of "UserFlowCoordinator"
-    }
-
-    func login() {
-        Log(self).info("User \(username) logged in")
-    }
-}
-```
-
-##### 3. Log("Category")
+##### 2. Log("Category")
 You can simply specify the category as a string:
 ```
 Log("Category").info("User \(username) logged in")
