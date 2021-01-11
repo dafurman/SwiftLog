@@ -2,7 +2,11 @@ import XCTest
 @testable import Log
 
 @available(iOS 13, tvOS 10, macOS 10.12, *)
-final class LogTests: XCTestCase {
+final private class LogTests: XCTestCase {
+
+    private struct LoggableStruct: Loggable {
+        let logCategory: String
+    }
 
     func testLog() {
         let message = "Test Message"
@@ -30,9 +34,48 @@ final class LogTests: XCTestCase {
         XCTAssertEqual(Log(category).default(message, includeCodeLocation: true), message + codeLocationSuffix(line: #line))
     }
 
+    func testLogCategoryFromType() {
+        let inputType: Int = 0
+        let log = Log(inputType)
+        let expectedCategory = "\(type(of: inputType))"
+        XCTAssertEqual(log.category, expectedCategory)
+    }
+
+    func testLogCategoryFromLoggable() {
+        let logCategory = "LogCategory"
+        let loggable: Loggable = LoggableStruct(logCategory: logCategory)
+        let log = Log(loggable)
+        XCTAssertEqual(log.category, logCategory)
+    }
+
+    func testLogCategoryFromRawString() {
+        let logCategory = "LogCategory"
+        let log = Log(logCategory)
+        XCTAssertEqual(log.category, logCategory)
+    }
+
+    func testIsLoggingEnabled() {
+        let log = Log(self)
+        let message = "Message"
+        let enabledMessage = log.info(message)
+        XCTAssertEqual(enabledMessage, message)
+
+        Log.isLoggingEnabled = false
+        let disabledMessage = log.info(message)
+        XCTAssertNil(disabledMessage)
+
+        Log.isLoggingEnabled = true
+        let reenabledMessage = log.info(message)
+        XCTAssertEqual(reenabledMessage, message)
+    }
+
     static var allTests = [
         ("testLog", testLog),
-        ("testLogCodeLocation", testLogCodeLocation)
+        ("testLogCodeLocation", testLogCodeLocation),
+        ("testLogCategoryFromType", testLogCategoryFromType),
+        ("testLogCategoryFromLoggable", testLogCategoryFromLoggable),
+        ("testLogCategoryFromRawString", testLogCategoryFromRawString),
+        ("testIsLoggingEnabled", testIsLoggingEnabled),
     ]
 
 }

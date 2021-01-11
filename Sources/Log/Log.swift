@@ -17,30 +17,31 @@ public struct Log {
 
     // MARK: - Properties
 
+    /// This subsystem will be used whenever no subsystem is passed to an initializer. Defaults to `Bundle.main.bundleIdentifier`, or an empty string if that identifier can't be found.
+    public static var defaultSubsystem = Bundle.main.bundleIdentifier ?? ""
     /// This can be set to `false` to completely disable logging. Defaults to `true`.
     public static var isLoggingEnabled = true
-    /// This subsystem will be used whenever no subsystem is passed to an initializer. Defaults to `Bundle.main.bundleIdentifier`.
-    public static var defaultSubsystem: String? = Bundle.main.bundleIdentifier
-    /// This subsystem will be used in logging when no subsystem is passed to an initializer and when `defaultSubystem` is nil.
-    public static var fallbackSubsystem: String = ""
 
     /// The subsystem that is used in logging.
     public let subsystem: String
     /// The category that is used in logging.
     public let category: String
+    /// The underlying logger being used.
+    public let oslog: OSLog
 
     // MARK: - Object Lifecycle
 
-    public init(_ category: String, subsystem: String? = Self.defaultSubsystem) {
+    public init(_ category: String, subsystem: String = Self.defaultSubsystem) {
         self.category = category
-        self.subsystem = subsystem ?? Self.fallbackSubsystem
+        self.subsystem = subsystem
+        self.oslog = OSLog(subsystem: subsystem, category: category)
     }
 
-    public init(_ subject: Any, subsystem: String? = Self.defaultSubsystem) {
+    public init(_ subject: Any, subsystem: String = Self.defaultSubsystem) {
         self.init("\(type(of: subject))", subsystem: subsystem)
     }
 
-    public init(_ loggable: Loggable, subsystem: String? = Self.defaultSubsystem) {
+    public init(_ loggable: Loggable, subsystem: String = Self.defaultSubsystem) {
         self.init(loggable.logCategory, subsystem: subsystem)
     }
 
@@ -66,14 +67,20 @@ public struct Log {
         file: StaticString = #file,
         function: StaticString = #function,
         line: UInt = #line
-    ) -> String {
-        var finalMessage = message
+    ) -> String? {
+        var modifiedMessage = message
         if includeCodeLocation {
-            finalMessage += " - \(file).\(function):\(line)"
+            modifiedMessage += " - \(file).\(function):\(line)"
         }
 
-        os_log("%{public}@", log: createOSLog(category: category), type: type, finalMessage)
-        return finalMessage
+        guard
+            Self.isLoggingEnabled == true
+        else {
+            return nil
+        }
+
+        os_log("%{public}@", log: self.oslog, type: type, modifiedMessage)
+        return modifiedMessage
     }
 
     /// Use this level to capture information during development to diagnose a particular issue, whilst actively debugging. These logs aren’t captured unless enabled by a configuration change.
@@ -95,7 +102,7 @@ public struct Log {
         file: StaticString = #file,
         function: StaticString = #function,
         line: UInt = #line
-    ) -> String {
+    ) -> String? {
         performLog(
             message,
             type: .debug,
@@ -125,7 +132,7 @@ public struct Log {
         file: StaticString = #file,
         function: StaticString = #function,
         line: UInt = #line
-    ) -> String {
+    ) -> String? {
         performLog(
             message,
             type: .default,
@@ -156,7 +163,7 @@ public struct Log {
         file: StaticString = #file,
         function: StaticString = #function,
         line: UInt = #line
-    ) -> String {
+    ) -> String? {
         performLog(
             message,
             type: .error,
@@ -187,7 +194,7 @@ public struct Log {
         file: StaticString = #file,
         function: StaticString = #function,
         line: UInt = #line
-    ) -> String {
+    ) -> String? {
         performLog(
             message,
             type: .fault,
@@ -218,7 +225,7 @@ public struct Log {
         file: StaticString = #file,
         function: StaticString = #function,
         line: UInt = #line
-    ) -> String {
+    ) -> String? {
         performLog(
             message,
             type: .info,
